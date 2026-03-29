@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EV Charge Finder</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+font-family: ‘DM Mono’, monospace;
+background: #0a0f0a;
+color: #e8f0e8;
+min-height: 100vh;
+display: flex;
+flex-direction: column;
+}
+
+header {
+background: #111811;
+border-bottom: 1px solid #1f2e1f;
+padding: 14px 20px;
+display: flex;
+align-items: center;
+justify-content: space-between;
+}
+
+.logo {
+font-family: ‘Syne’, sans-serif;
+font-weight: 800;
+font-size: 1rem;
+color: #39ff7a;
+display: flex;
+align-items: center;
+gap: 8px;
+}
+
+.status {
+font-size: 0.7rem;
+color: #6b8c6b;
+display: flex;
+align-items: center;
+gap: 6px;
+}
+
+.dot {
+width: 7px; height: 7px;
+background: #39ff7a;
+border-radius: 50%;
+animation: blink 2s infinite;
+}
+
+@keyframes blink {
+0%,100% { opacity:1; } 50% { opacity:0.3; }
+}
+
+.controls {
+background: #111811;
+border-bottom: 1px solid #1f2e1f;
+padding: 14px 20px;
+display: flex;
+flex-direction: column;
+gap: 10px;
+}
+
+.label {
+font-size: 0.62rem;
+color: #6b8c6b;
+text-transform: uppercase;
+letter-spacing: 0.1em;
+margin-bottom: 4px;
+}
+
+.row { display: flex; gap: 8px; align-items: center; }
+
+input[type=“text”] {
+flex: 1;
+background: #151e15;
+border: 1px solid #1f2e1f;
+color: #e8f0e8;
+padding: 9px 12px;
+font-family: ‘DM Mono’, monospace;
+font-size: 0.8rem;
+border-radius: 8px;
+outline: none;
+}
+
+input[type=“text”]:focus { border-color: #39ff7a; }
+
+.btn {
+background: #39ff7a;
+color: #000;
+border: none;
+padding: 9px 16px;
+font-family: ‘Syne’, sans-serif;
+font-weight: 700;
+font-size: 0.75rem;
+border-radius: 8px;
+cursor: pointer;
+white-space: nowrap;
+}
+
+.btn-ghost {
+background: transparent;
+border: 1px solid #1f2e1f;
+color: #39ff7a;
+padding: 9px 14px;
+font-family: ‘DM Mono’, monospace;
+font-size: 0.75rem;
+border-radius: 8px;
+cursor: pointer;
+white-space: nowrap;
+}
+
+input[type=“range”] {
+flex: 1;
+accent-color: #39ff7a;
+}
+
+.range-val { color: #39ff7a; font-size: 0.75rem; min-width: 40px; text-align: right; }
+
+.stats {
+display: flex;
+gap: 8px;
+padding: 12px 20px;
+background: #111811;
+border-bottom: 1px solid #1f2e1f;
+}
+
+.stat {
+flex: 1;
+background: #151e15;
+border: 1px solid #1f2e1f;
+border-radius: 8px;
+padding: 8px;
+text-align: center;
+}
+
+.stat-num {
+font-family: ‘Syne’, sans-serif;
+font-weight: 800;
+font-size: 1.4rem;
+color: #39ff7a;
+line-height: 1;
+}
+
+.stat-num.amber { color: #ffb340; }
+.stat-num.white { color: #e8f0e8; }
+
+.stat-label {
+font-size: 0.58rem;
+color: #6b8c6b;
+text-transform: uppercase;
+letter-spacing: 0.08em;
+margin-top: 3px;
+}
+
+.list {
+flex: 1;
+overflow-y: auto;
+padding: 12px;
+display: flex;
+flex-direction: column;
+gap: 8px;
+}
+
+.empty {
+flex: 1;
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+color: #6b8c6b;
+font-size: 0.8rem;
+text-align: center;
+gap: 8px;
+padding: 40px 20px;
+}
+
+.empty-icon { font-size: 2.5rem; }
+
+.spinner-wrap {
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+padding: 40px;
+gap: 12px;
+color: #6b8c6b;
+font-size: 0.78rem;
+}
+
+.spinner {
+width: 28px; height: 28px;
+border: 2px solid #1f2e1f;
+border-top-color: #39ff7a;
+border-radius: 50%;
+animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.card {
+background: #151e15;
+border: 1px solid #1f2e1f;
+border-radius: 10px;
+padding: 12px 14px;
+cursor: pointer;
+transition: border-color 0.2s;
+}
+
+.card:hover, .card.active { border-color: #39ff7a; }
+
+.card-top {
+display: flex;
+justify-content: space-between;
+align-items: flex-start;
+margin-bottom: 5px;
+}
+
+.card-name {
+font-family: ‘Syne’, sans-serif;
+font-weight: 700;
+font-size: 0.82rem;
+flex: 1;
+padding-right: 8px;
+line-height: 1.3;
+}
+
+.badge {
+font-size: 0.6rem;
+padding: 2px 7px;
+border-radius: 20px;
+text-transform: uppercase;
+letter-spacing: 0.05em;
+white-space: nowrap;
+}
+
+.badge-green { background: rgba(57,255,122,0.12); color: #39ff7a; border: 1px solid rgba(57,255,122,0.3); }
+.badge-amber { background: rgba(255,179,64,0.12); color: #ffb340; border: 1px solid rgba(255,179,64,0.3); }
+.badge-red { background: rgba(255,69,96,0.12); color: #ff4560; border: 1px solid rgba(255,69,96,0.3); }
+
+.card-addr {
+font-size: 0.68rem;
+color: #6b8c6b;
+margin-bottom: 8px;
+}
+
+.tags { display: flex; flex-wrap: wrap; gap: 5px; }
+
+.tag {
+font-size: 0.6rem;
+background: rgba(255,255,255,0.04);
+border: 1px solid #1f2e1f;
+border-radius: 4px;
+padding: 2px 7px;
+}
+
+.tag.fast { color: #ffb340; border-color: rgba(255,179,64,0.3); }
+
+.detail {
+background: #111811;
+border-top: 1px solid #1f2e1f;
+padding: 16px 20px;
+display: none;
+}
+
+.detail.show { display: block; }
+
+.detail-title {
+font-family: ‘Syne’, sans-serif;
+font-weight: 800;
+font-size: 0.95rem;
+margin-bottom: 10px;
+color: #39ff7a;
+}
+
+.detail-row {
+display: flex;
+gap: 8px;
+font-size: 0.72rem;
+margin-bottom: 5px;
+color: #6b8c6b;
+}
+
+.detail-row span:first-child { min-width: 80px; color: #e8f0e8; }
+
+.conn-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
+
+.close-detail {
+float: right;
+background: none;
+border: none;
+color: #6b8c6b;
+font-size: 1.1rem;
+cursor: pointer;
+line-height: 1;
+}
+</style>
+
+</head>
+<body>
+
+<header>
+  <div class="logo">⚡ EV Charge Finder</div>
+  <div class="status"><div class="dot"></div><span id="status">Ready</span></div>
+</header>
+
+<div class="controls">
+  <div>
+    <div class="label">Location</div>
+    <div class="row">
+      <input type="text" id="loc" placeholder="e.g. Lindfield NSW" value="Lindfield NSW">
+      <button class="btn" onclick="searchAddr()">Search</button>
+    </div>
+  </div>
+  <div class="row">
+    <button class="btn-ghost" onclick="useGPS()">📍 Use My Location</button>
+    <div style="flex:1"></div>
+    <div class="label" style="margin:0">Radius</div>
+    <input type="range" id="radius" min="1" max="20" value="5" oninput="updateRadius(this.value)" style="width:80px">
+    <span class="range-val" id="rval">5km</span>
+  </div>
+</div>
+
+<div class="stats">
+  <div class="stat"><div class="stat-num white" id="s-total">—</div><div class="stat-label">Found</div></div>
+  <div class="stat"><div class="stat-num" id="s-avail">—</div><div class="stat-label">Available</div></div>
+  <div class="stat"><div class="stat-num amber" id="s-fast">—</div><div class="stat-label">Fast DC</div></div>
+</div>
+
+<div class="detail" id="detail">
+  <button class="close-detail" onclick="closeDetail()">✕</button>
+  <div class="detail-title" id="d-title"></div>
+  <div id="d-content"></div>
+</div>
+
+<div class="list" id="list">
+  <div class="empty">
+    <div class="empty-icon">⚡</div>
+    <strong style="color:#e8f0e8">Find chargers near you</strong>
+    <span>Enter a suburb or tap Use My Location</span>
+  </div>
+</div>
+
+<script>
+const API_KEY = 'b20c9a24-96b8-4c60-b8b2-a10e1f8f68d3';
+let chargers = [];
+let lat = -33.7786, lng = 151.1480, radius = 5;
+
+function setStatus(msg) { document.getElementById('status').textContent = msg; }
+function updateRadius(v) { radius = parseInt(v); document.getElementById('rval').textContent = v + 'km'; }
+
+async function searchAddr() {
+  const q = document.getElementById('loc').value.trim();
+  if (!q) return;
+  setStatus('Locating...');
+  try {
+    const r = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1`);
+    const d = await r.json();
+    if (!d.length) { setStatus('Not found'); return; }
+    lat = parseFloat(d[0].lat);
+    lng = parseFloat(d[0].lon);
+    fetchChargers();
+  } catch(e) { setStatus('Location error'); }
+}
+
+function useGPS() {
+  if (!navigator.geolocation) { alert('Geolocation not supported'); return; }
+  setStatus('Getting GPS...');
+  navigator.geolocation.getCurrentPosition(pos => {
+    lat = pos.coords.latitude;
+    lng = pos.coords.longitude;
+    document.getElementById('loc').value = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+    fetchChargers();
+  }, err => { setStatus('GPS denied'); });
+}
+
+async function fetchChargers() {
+  setStatus('Loading...');
+  showLoading();
+  try {
+    const url = `https://api.openchargemap.io/v3/poi/?output=json&latitude=${lat}&longitude=${lng}&distance=${radius}&distanceunit=km&maxresults=60&compact=true&verbose=false`;
+    const r = await fetch(url, { headers: { 'X-API-Key': API_KEY } });
+    if (!r.ok) throw new Error('API ' + r.status);
+    const data = await r.json();
+    chargers = data;
+    render();
+    updateStats();
+    setStatus(`${chargers.length} stations found`);
+  } catch(e) {
+    setStatus('Error: ' + e.message);
+    showError(e.message);
+  }
+}
+
+function showLoading() {
+  document.getElementById('list').innerHTML = `<div class="spinner-wrap"><div class="spinner"></div><span>Fetching chargers...</span></div>`;
+}
+
+function showError(msg) {
+  document.getElementById('list').innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><strong style="color:#ff4560">API Error</strong><span>${msg}</span></div>`;
+}
+
+function updateStats() {
+  document.getElementById('s-total').textContent = chargers.length;
+  document.getElementById('s-avail').textContent = chargers.filter(c => c.StatusType?.ID === 50).length;
+  document.getElementById('s-fast').textContent = chargers.filter(c => (c.Connections||[]).some(cn => (cn.PowerKW||0) >= 50)).length;
+}
+
+function render() {
+  const list = document.getElementById('list');
+  if (!chargers.length) {
+    list.innerHTML = `<div class="empty"><div class="empty-icon">🔍</div><span>No chargers found — try increasing radius</span></div>`;
+    return;
+  }
+  list.innerHTML = chargers.map((c, i) => {
+    const name = c.AddressInfo?.Title || 'Unknown';
+    const addr = c.AddressInfo?.AddressLine1 || c.AddressInfo?.Town || '';
+    const sid = c.StatusType?.ID;
+    const [bClass, bLabel] = sid === 50 ? ['badge-green','Available'] : sid === 200 ? ['badge-red','In Use'] : ['badge-amber','Unknown'];
+    const conns = c.Connections || [];
+    const maxKW = Math.max(0, ...conns.map(cn => cn.PowerKW || 0));
+    const types = [...new Set(conns.map(cn => cn.ConnectionType?.Title).filter(Boolean))].slice(0,3);
+    return `<div class="card" id="card-${i}" onclick="select(${i})">
+      <div class="card-top">
+        <div class="card-name">${name}</div>
+        <div class="badge ${bClass}">${bLabel}</div>
+      </div>
+      <div class="card-addr">${addr}</div>
+      <div class="tags">
+        ${maxKW > 0 ? `<span class="tag ${maxKW>=50?'fast':''}">${maxKW>=50?'⚡ ':''}${maxKW}kW</span>` : ''}
+        ${conns.length ? `<span class="tag">${conns.length} port${conns.length>1?'s':''}</span>` : ''}
+        ${types.map(t=>`<span class="tag">${t}</span>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function select(i) {
+  document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
+  document.getElementById(`card-${i}`)?.classList.add('active');
+  const c = chargers[i];
+  const conns = c.Connections || [];
+  const maxKW = Math.max(0, ...conns.map(cn => cn.PowerKW || 0));
+  const types = [...new Set(conns.map(cn => cn.ConnectionType?.Title).filter(Boolean))];
+  document.getElementById('d-title').textContent = c.AddressInfo?.Title || 'Charging Station';
+  document.getElementById('d-content').innerHTML = `
+    <div class="detail-row"><span>Operator</span><span>${c.OperatorInfo?.Title || 'Unknown'}</span></div>
+    <div class="detail-row"><span>Access</span><span>${c.UsageType?.Title || 'Unknown'}</span></div>
+    <div class="detail-row"><span>Max Power</span><span>${maxKW ? maxKW+'kW' : 'Unknown'}</span></div>
+    <div class="detail-row"><span>Cost</span><span>${c.UsageCost || 'Not listed'}</span></div>
+    <div class="detail-row"><span>Ports</span><span>${conns.length}</span></div>
+    <div class="conn-tags">${types.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+  `;
+  document.getElementById('detail').classList.add('show');
+  document.getElementById(`card-${i}`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function closeDetail() { document.getElementById('detail').classList.remove('show'); }
+
+// Auto-search on load
+searchAddr();
+</script>
+
+</body>
+</html>
