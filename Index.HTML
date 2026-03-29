@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EV Charge Finder · Sydney</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0f0a;
+    --surface: #111811;
+    --card: #151e15;
+    --border: #1f2e1f;
+    --green: #39ff7a;
+    --green-dim: #1a7a3a;
+    --amber: #ffb340;
+    --red: #ff4560;
+    --text: #e8f0e8;
+    --muted: #6b8c6b;
+    --mono: 'DM Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface);
+  }
+
+  .logo {
+    font-family: var(--sans);
+    font-weight: 800;
+    font-size: 1.1rem;
+    letter-spacing: -0.02em;
+    color: var(--green);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .logo-icon {
+    width: 28px; height: 28px;
+    background: var(--green);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    color: #000;
+    font-size: 14px;
+  }
+
+  .status-bar {
+    font-size: 0.7rem;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .pulse {
+    width: 7px; height: 7px;
+    background: var(--green);
+    border-radius: 50%;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.7); }
+  }
+
+  .main {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    flex: 1;
+    height: calc(100vh - 61px);
+  }
+
+  .sidebar {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .controls {
+    padding: 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .label {
+    font-size: 0.65rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 4px;
+  }
+
+  .input-row {
+    display: flex;
+    gap: 8px;
+  }
+
+  input[type="text"] {
+    flex: 1;
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 12px;
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    border-radius: 6px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  input[type="text"]:focus { border-color: var(--green-dim); }
+
+  .btn {
+    background: var(--green);
+    color: #000;
+    border: none;
+    padding: 8px 14px;
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: 0.75rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+    white-space: nowrap;
+  }
+
+  .btn:hover { opacity: 0.85; }
+  .btn:active { transform: scale(0.97); }
+
+  .btn-outline {
+    background: transparent;
+    border: 1px solid var(--green-dim);
+    color: var(--green);
+  }
+
+  .btn-outline:hover { background: rgba(57,255,122,0.07); }
+
+  .range-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  input[type="range"] {
+    flex: 1;
+    accent-color: var(--green);
+    cursor: pointer;
+  }
+
+  .range-val {
+    font-size: 0.75rem;
+    color: var(--green);
+    min-width: 45px;
+    text-align: right;
+  }
+
+  .stats-row {
+    display: flex;
+    gap: 8px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .stat {
+    flex: 1;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 10px;
+    text-align: center;
+  }
+
+  .stat-num {
+    font-family: var(--sans);
+    font-weight: 800;
+    font-size: 1.3rem;
+    color: var(--green);
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-size: 0.6rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-top: 3px;
+  }
+
+  .results {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .results::-webkit-scrollbar { width: 4px; }
+  .results::-webkit-scrollbar-track { background: transparent; }
+  .results::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .charger-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    animation: slideIn 0.3s ease both;
+  }
+
+  .charger-card:hover { border-color: var(--green-dim); background: #1a241a; }
+  .charger-card.active { border-color: var(--green); background: #1a2e1a; }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(-10px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 6px;
+  }
+
+  .card-name {
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: 0.82rem;
+    line-height: 1.3;
+    flex: 1;
+    padding-right: 8px;
+  }
+
+  .status-badge {
+    font-size: 0.6rem;
+    padding: 2px 7px;
+    border-radius: 20px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+  }
+
+  .status-available { background: rgba(57,255,122,0.15); color: var(--green); border: 1px solid var(--green-dim); }
+  .status-unknown { background: rgba(255,179,64,0.12); color: var(--amber); border: 1px solid rgba(255,179,64,0.3); }
+  .status-occupied { background: rgba(255,69,96,0.12); color: var(--red); border: 1px solid rgba(255,69,96,0.3); }
+
+  .card-addr {
+    font-size: 0.7rem;
+    color: var(--muted);
+    margin-bottom: 8px;
+    line-height: 1.4;
+  }
+
+  .card-meta {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .tag {
+    font-size: 0.62rem;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 6px;
+    color: var(--text);
+  }
+
+  .tag.fast { color: var(--amber); border-color: rgba(255,179,64,0.3); }
+
+  .map-panel {
+    position: relative;
+    background: #0d120d;
+    overflow: hidden;
+  }
+
+  #map-canvas {
+    width: 100%; height: 100%;
+  }
+
+  .map-overlay {
+    position: absolute;
+    top: 12px; right: 12px;
+    background: rgba(10,15,10,0.9);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 0.68rem;
+    color: var(--muted);
+    backdrop-filter: blur(8px);
+  }
+
+  .map-overlay .legend-item {
+    display: flex; align-items: center; gap: 7px; margin-bottom: 5px;
+  }
+  .map-overlay .legend-item:last-child { margin-bottom: 0; }
+
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+
+  .loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    gap: 12px;
+    color: var(--muted);
+    font-size: 0.78rem;
+  }
+
+  .spinner {
+    width: 32px; height: 32px;
+    border: 2px solid var(--border);
+    border-top-color: var(--green);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .empty-state {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    gap: 8px;
+    color: var(--muted);
+    font-size: 0.78rem;
+    text-align: center;
+    padding: 20px;
+  }
+
+  .empty-icon { font-size: 2rem; margin-bottom: 4px; }
+
+  .detail-popup {
+    position: absolute;
+    bottom: 20px; left: 20px;
+    max-width: 300px;
+    background: rgba(10,15,10,0.95);
+    border: 1px solid var(--green-dim);
+    border-radius: 12px;
+    padding: 16px;
+    backdrop-filter: blur(12px);
+    display: none;
+    animation: popUp 0.2s ease;
+  }
+
+  @keyframes popUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .detail-popup .close-btn {
+    position: absolute; top: 10px; right: 12px;
+    background: none; border: none; color: var(--muted);
+    cursor: pointer; font-size: 1rem; line-height: 1;
+  }
+
+  .detail-title {
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: 0.9rem;
+    margin-bottom: 6px;
+    padding-right: 20px;
+  }
+
+  .detail-row {
+    font-size: 0.7rem;
+    color: var(--muted);
+    margin-bottom: 4px;
+    display: flex; gap: 6px;
+  }
+
+  .detail-row span:first-child { color: var(--green); min-width: 70px; }
+
+  .connector-list {
+    margin-top: 10px;
+    display: flex; flex-wrap: wrap; gap: 6px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">⚡</div>
+    EV Charge Finder
+  </div>
+  <div class="status-bar">
+    <div class="pulse"></div>
+    <span id="status-text">Ready</span>
+  </div>
+</header>
+
+<div class="main">
+  <div class="sidebar">
+    <div class="controls">
+      <div>
+        <div class="label">Search Location</div>
+        <div class="input-row">
+          <input type="text" id="location-input" placeholder="e.g. Lindfield NSW" value="Lindfield NSW">
+          <button class="btn" onclick="searchByAddress()">Search</button>
+        </div>
+      </div>
+      <div>
+        <div class="label">Radius</div>
+        <div class="range-row">
+          <input type="range" id="radius-slider" min="1" max="20" value="5" oninput="updateRadius(this.value)">
+          <span class="range-val" id="radius-display">5 km</span>
+        </div>
+      </div>
+      <button class="btn btn-outline" onclick="useMyLocation()">📍 Use My Location</button>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat">
+        <div class="stat-num" id="stat-total">—</div>
+        <div class="stat-label">Found</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num" id="stat-available" style="color:var(--green)">—</div>
+        <div class="stat-label">Available</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num" id="stat-fast" style="color:var(--amber)">—</div>
+        <div class="stat-label">Fast DC</div>
+      </div>
+    </div>
+
+    <div class="results" id="results-list">
+      <div class="loading-state" id="loading-state" style="display:none">
+        <div class="spinner"></div>
+        <span>Fetching chargers...</span>
+      </div>
+      <div class="empty-state" id="empty-state" style="display:flex">
+        <div class="empty-icon">⚡</div>
+        <strong style="color:var(--text)">Find chargers near you</strong>
+        <span>Enter a suburb or use your location to discover nearby EV charging stations.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="map-panel">
+    <canvas id="map-canvas"></canvas>
+
+    <div class="map-overlay">
+      <div class="legend-item"><div class="dot" style="background:var(--green)"></div> Available</div>
+      <div class="legend-item"><div class="dot" style="background:var(--amber)"></div> Unknown</div>
+      <div class="legend-item"><div class="dot" style="background:var(--red)"></div> Occupied</div>
+    </div>
+
+    <div class="detail-popup" id="detail-popup">
+      <button class="close-btn" onclick="closePopup()">✕</button>
+      <div class="detail-title" id="popup-title"></div>
+      <div id="popup-content"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────
+let chargers = [];
+let selectedIdx = null;
+let centerLat = -33.7786, centerLng = 151.1480;
+let radiusKm = 5;
+let mapBounds = null;
+let mapEl, ctx;
+
+// ── Init ───────────────────────────────────────────────────────────────────
+window.addEventListener('load', () => {
+  mapEl = document.getElementById('map-canvas');
+  ctx = mapEl.getContext('2d');
+  resizeCanvas();
+  window.addEventListener('resize', () => { resizeCanvas(); drawMap(); });
+  mapEl.addEventListener('click', onMapClick);
+  searchByAddress();
+});
+
+function resizeCanvas() {
+  mapEl.width = mapEl.offsetWidth;
+  mapEl.height = mapEl.offsetHeight;
+}
+
+// ── Geocode ────────────────────────────────────────────────────────────────
+async function searchByAddress() {
+  const q = document.getElementById('location-input').value.trim();
+  if (!q) return;
+  setStatus('Geocoding...');
+  try {
+    const r = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1`);
+    const d = await r.json();
+    if (d.length === 0) { setStatus('Location not found'); return; }
+    centerLat = parseFloat(d[0].lat);
+    centerLng = parseFloat(d[0].lon);
+    fetchChargers();
+  } catch(e) { setStatus('Geocode error'); }
+}
+
+function useMyLocation() {
+  if (!navigator.geolocation) { alert('Geolocation not supported'); return; }
+  setStatus('Getting location...');
+  navigator.geolocation.getCurrentPosition(pos => {
+    centerLat = pos.coords.latitude;
+    centerLng = pos.coords.longitude;
+    document.getElementById('location-input').value = `${centerLat.toFixed(4)}, ${centerLng.toFixed(4)}`;
+    fetchChargers();
+  }, () => setStatus('Location denied'));
+}
+
+function updateRadius(v) {
+  radiusKm = parseInt(v);
+  document.getElementById('radius-display').textContent = `${v} km`;
+  if (chargers.length > 0) fetchChargers();
+}
+
+// ── Fetch Chargers ─────────────────────────────────────────────────────────
+async function fetchChargers() {
+  showLoading(true);
+  setStatus('Fetching chargers...');
+  selectedIdx = null;
+  closePopup();
+
+  const url = `https://api.openchargemap.io/v3/poi/?output=json&latitude=${centerLat}&longitude=${centerLng}&distance=${radiusKm}&distanceunit=km&maxresults=60&compact=true&verbose=false`;
+
+  try {
+    const r = await fetch(url, { headers: { 'X-API-Key': 'c0e77e0a-6553-44c7-b83b-bd4e2c5d28a2' } });
+    const data = await r.json();
+    chargers = data;
+    renderResults();
+    computeBounds();
+    drawMap();
+    updateStats();
+    setStatus(`Found ${chargers.length} stations`);
+  } catch(e) {
+    // Fallback: try without API key (rate limited but sometimes works)
+    try {
+      const r2 = await fetch(`https://api.openchargemap.io/v3/poi/?output=json&latitude=${centerLat}&longitude=${centerLng}&distance=${radiusKm}&distanceunit=km&maxresults=40&compact=true&verbose=false`);
+      const data2 = await r2.json();
+      chargers = data2;
+      renderResults();
+      computeBounds();
+      drawMap();
+      updateStats();
+      setStatus(`Found ${chargers.length} stations`);
+    } catch(e2) {
+      setStatus('API error — check connection');
+      showLoading(false);
+    }
+  }
+  showLoading(false);
+}
+
+// ── Render List ────────────────────────────────────────────────────────────
+function renderResults() {
+  const list = document.getElementById('results-list');
+  const loading = document.getElementById('loading-state');
+  const empty = document.getElementById('empty-state');
+
+  list.innerHTML = '';
+  list.appendChild(loading);
+  list.appendChild(empty);
+
+  if (chargers.length === 0) {
+    empty.style.display = 'flex';
+    return;
+  }
+  empty.style.display = 'none';
+
+  chargers.forEach((c, i) => {
+    const card = document.createElement('div');
+    card.className = 'charger-card';
+    card.id = `card-${i}`;
+
+    const name = c.AddressInfo?.Title || 'Unknown Station';
+    const addr = c.AddressInfo?.AddressLine1 || c.AddressInfo?.Town || '';
+    const statusCode = c.StatusType?.ID;
+    let statusClass = 'status-unknown', statusLabel = 'Unknown';
+    if (statusCode === 50) { statusClass = 'status-available'; statusLabel = 'Available'; }
+    else if (statusCode === 200) { statusClass = 'status-occupied'; statusLabel = 'In Use'; }
+
+    const connectors = c.Connections || [];
+    const hasFast = connectors.some(cn => cn.PowerKW && cn.PowerKW >= 50);
+    const maxKW = Math.max(0, ...connectors.map(cn => cn.PowerKW || 0));
+    const connTypes = [...new Set(connectors.map(cn => cn.ConnectionType?.Title).filter(Boolean))].slice(0, 3);
+
+    card.innerHTML = `
+      <div class="card-header">
+        <div class="card-name">${name}</div>
+        <div class="status-badge ${statusClass}">${statusLabel}</div>
+      </div>
+      <div class="card-addr">${addr}</div>
+      <div class="card-meta">
+        ${maxKW > 0 ? `<span class="tag ${maxKW >= 50 ? 'fast' : ''}">${maxKW >= 50 ? '⚡ ' : ''}${maxKW}kW</span>` : ''}
+        ${connectors.length ? `<span class="tag">${connectors.length} port${connectors.length > 1 ? 's' : ''}</span>` : ''}
+        ${connTypes.map(t => `<span class="tag">${t}</span>`).join('')}
+      </div>
+    `;
+    card.addEventListener('click', () => selectCharger(i));
+    list.appendChild(card);
+  });
+}
+
+function updateStats() {
+  document.getElementById('stat-total').textContent = chargers.length;
+  const avail = chargers.filter(c => c.StatusType?.ID === 50).length;
+  document.getElementById('stat-available').textContent = avail;
+  const fast = chargers.filter(c => (c.Connections||[]).some(cn => cn.PowerKW >= 50)).length;
+  document.getElementById('stat-fast').textContent = fast;
+}
+
+// ── Map Drawing ────────────────────────────────────────────────────────────
+function computeBounds() {
+  if (chargers.length === 0) {
+    mapBounds = { minLat: centerLat - 0.05, maxLat: centerLat + 0.05, minLng: centerLng - 0.07, maxLng: centerLng + 0.07 };
+    return;
+  }
+  const lats = chargers.map(c => c.AddressInfo?.Latitude).filter(Boolean);
+  const lngs = chargers.map(c => c.AddressInfo?.Longitude).filter(Boolean);
+  const pad = 0.01;
+  mapBounds = {
+    minLat: Math.min(...lats, centerLat) - pad,
+    maxLat: Math.max(...lats, centerLat) + pad,
+    minLng: Math.min(...lngs, centerLng) - pad,
+    maxLng: Math.max(...lngs, centerLng) + pad,
+  };
+}
+
+function latLngToXY(lat, lng) {
+  const w = mapEl.width, h = mapEl.height;
+  const x = (lng - mapBounds.minLng) / (mapBounds.maxLng - mapBounds.minLng) * w;
+  const y = h - (lat - mapBounds.minLat) / (mapBounds.maxLat - mapBounds.minLat) * h;
+  return [x, y];
+}
+
+function drawMap() {
+  if (!ctx || !mapBounds) return;
+  const w = mapEl.width, h = mapEl.height;
+  ctx.clearRect(0, 0, w, h);
+
+  // Background
+  ctx.fillStyle = '#0a120a';
+  ctx.fillRect(0, 0, w, h);
+
+  // Grid
+  ctx.strokeStyle = '#141e14';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < w; i += 40) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, h); ctx.stroke(); }
+  for (let i = 0; i < h; i += 40) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(w, i); ctx.stroke(); }
+
+  // Radius circle
+  const [cx, cy] = latLngToXY(centerLat, centerLng);
+  const radiusPxLng = (radiusKm / 111) / (mapBounds.maxLng - mapBounds.minLng) * w;
+  ctx.beginPath();
+  ctx.arc(cx, cy, radiusPxLng, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(57,255,122,0.12)';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([6, 4]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = 'rgba(57,255,122,0.04)';
+  ctx.fill();
+
+  // Charger dots
+  chargers.forEach((c, i) => {
+    const lat = c.AddressInfo?.Latitude, lng = c.AddressInfo?.Longitude;
+    if (!lat || !lng) return;
+    const [x, y] = latLngToXY(lat, lng);
+    const statusCode = c.StatusType?.ID;
+    let color = '#ffb340';
+    if (statusCode === 50) color = '#39ff7a';
+    else if (statusCode === 200) color = '#ff4560';
+    const r = selectedIdx === i ? 9 : 6;
+
+    // Glow
+    const grad = ctx.createRadialGradient(x, y, 0, x, y, r * 2.5);
+    grad.addColorStop(0, color + '55');
+    grad.addColorStop(1, color + '00');
+    ctx.beginPath(); ctx.arc(x, y, r * 2.5, 0, Math.PI * 2);
+    ctx.fillStyle = grad; ctx.fill();
+
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fillStyle = color; ctx.fill();
+    if (selectedIdx === i) {
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+  });
+
+  // Center marker
+  ctx.beginPath(); ctx.arc(cx, cy, 8, 0, Math.PI * 2);
+  ctx.fillStyle = '#fff'; ctx.fill();
+  ctx.beginPath(); ctx.arc(cx, cy, 4, 0, Math.PI * 2);
+  ctx.fillStyle = '#0a0f0a'; ctx.fill();
+}
+
+function onMapClick(e) {
+  const rect = mapEl.getBoundingClientRect();
+  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+  let closest = -1, minDist = 20;
+  chargers.forEach((c, i) => {
+    const lat = c.AddressInfo?.Latitude, lng = c.AddressInfo?.Longitude;
+    if (!lat || !lng) return;
+    const [x, y] = latLngToXY(lat, lng);
+    const d = Math.sqrt((x - mx) ** 2 + (y - my) ** 2);
+    if (d < minDist) { minDist = d; closest = i; }
+  });
+  if (closest >= 0) selectCharger(closest);
+  else { selectedIdx = null; closePopup(); drawMap(); }
+}
+
+// ── Select Charger ─────────────────────────────────────────────────────────
+function selectCharger(i) {
+  if (selectedIdx !== null) {
+    const prev = document.getElementById(`card-${selectedIdx}`);
+    if (prev) prev.classList.remove('active');
+  }
+  selectedIdx = i;
+  const card = document.getElementById(`card-${i}`);
+  if (card) { card.classList.add('active'); card.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+  drawMap();
+  showPopup(i);
+}
+
+function showPopup(i) {
+  const c = chargers[i];
+  const popup = document.getElementById('detail-popup');
+  document.getElementById('popup-title').textContent = c.AddressInfo?.Title || 'Charging Station';
+
+  const conns = c.Connections || [];
+  const maxKW = Math.max(0, ...conns.map(cn => cn.PowerKW || 0));
+  const connTypes = [...new Set(conns.map(cn => cn.ConnectionType?.Title).filter(Boolean))];
+  const usageCost = c.UsageCost || 'Not specified';
+  const operator = c.OperatorInfo?.Title || 'Unknown';
+  const access = c.UsageType?.Title || 'Unknown';
+
+  document.getElementById('popup-content').innerHTML = `
+    <div class="detail-row"><span>Operator</span><span>${operator}</span></div>
+    <div class="detail-row"><span>Access</span><span>${access}</span></div>
+    <div class="detail-row"><span>Max Power</span><span>${maxKW ? maxKW + ' kW' : 'Unknown'}</span></div>
+    <div class="detail-row"><span>Cost</span><span>${usageCost}</span></div>
+    <div class="detail-row"><span>Ports</span><span>${conns.length}</span></div>
+    <div class="connector-list">
+      ${connTypes.map(t => `<span class="tag">${t}</span>`).join('')}
+    </div>
+  `;
+  popup.style.display = 'block';
+}
+
+function closePopup() {
+  document.getElementById('detail-popup').style.display = 'none';
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+function showLoading(show) {
+  document.getElementById('loading-state').style.display = show ? 'flex' : 'none';
+}
+
+function setStatus(msg) {
+  document.getElementById('status-text').textContent = msg;
+}
+</script>
+</body>
+</html>
